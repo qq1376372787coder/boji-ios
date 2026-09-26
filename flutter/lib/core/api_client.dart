@@ -131,6 +131,15 @@ class MockApiClient extends ApiClient {
       case '/api/auth/logout':
         _state = null;
         return {'ok': true};
+      case '/api/ai/evaluate':
+        return {
+          'parsed': {
+            'items': [
+              {'name': '鸡胸肉沙拉', 'calories': 420, 'protein': 36.5, 'confidence': 'medium'},
+            ],
+            'totals': {'calories': 420, 'protein': 36.5, 'carbs': 28, 'fat': 14},
+          },
+        };
       case '/api/ai/summary':
         return {
           'text': '最近训练节奏稳定，建议继续保持当前频率。',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/session_store.dart';
@@ -56,6 +57,26 @@ class _RecordsPageState extends State<RecordsPage> {
     if (mounted) await _loadRecords();
   }
 
+  Future<Map<String, dynamic>?> _recognizeMeal() async {
+    try {
+      final api = context.read<SessionStore>().api;
+      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (picked == null) return null;
+      final data = await api.post(
+        '/api/ai/evaluate',
+        body: {
+          'task': 'meal',
+          'imageData': 'mock-image',
+        },
+      );
+      final items = (data['parsed']?['items'] as List? ?? const []);
+      if (items.isEmpty) return null;
+      return Map<String, dynamic>.from(items.first as Map);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _showMealDialog() async {
     final nameController = TextEditingController();
     final caloriesController = TextEditingController();
@@ -103,6 +124,19 @@ class _RecordsPageState extends State<RecordsPage> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final result = await _recognizeMeal();
+                if (result != null && sheetContext.mounted) {
+                  nameController.text = result['name']?.toString() ?? nameController.text;
+                  caloriesController.text = (result['calories'] ?? 0).toString();
+                  proteinController.text = (result['protein'] ?? 0).toString();
+                }
+              },
+              icon: const Icon(Icons.photo_camera_outlined),
+              label: const Text('拍照 / 选图识别'),
             ),
             const SizedBox(height: 18),
             FilledButton(
@@ -541,4 +575,5 @@ class _Macro extends StatelessWidget {
     );
   }
 }
+
 
