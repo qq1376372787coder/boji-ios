@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import 'config.dart';
 import 'core/session_store.dart';
 import 'features/auth/login_page.dart';
-import 'features/home/home_page.dart';
+import 'features/shell/app_shell.dart';
 import 'features/onboarding/onboarding_page.dart';
 import 'services/purchase_service.dart';
+import 'theme/app_theme.dart';
 import 'services/push_service.dart';
 
 Future<void> main() async {
@@ -46,22 +47,7 @@ class BojiApp extends StatelessWidget {
     return MaterialApp(
       title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2F6FED),
-          brightness: Brightness.light,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF3F6FB),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFFDCE2EC)),
-          ),
-        ),
-      ),
+      theme: AppTheme.light(),
       home: const RootGate(),
     );
   }
@@ -86,9 +72,10 @@ class RootGate extends StatelessWidget {
       case SessionPhase.onboarding:
         return const OnboardingPage();
       case SessionPhase.ready:
-        return const HomePage();
+        return const AppShell();
     }
   }
 }
+
 
 
