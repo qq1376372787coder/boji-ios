@@ -1,70 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/session_store.dart';
+import '../../services/sound_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass.dart';
 import '../ai/ai_report_page.dart';
 import '../records/records_page.dart';
 import '../training/training_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
+  }
+
+  void _selectDate(DateTime date) {
+    HapticFeedback.selectionClick();
+    SoundService.instance.tick();
+    setState(() => _selectedDate = date);
+  }
 
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionStore>();
-    final active = session.user?.membership.active == true;
 
-    return Scaffold(backgroundColor: Colors.transparent,
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
           children: [
             _header(context, session.user?.displayName),
             const SizedBox(height: 18),
-            _membershipBanner(context, active),
+            _calendarCard(context),
             const SizedBox(height: 18),
-            _todayHero(context),
+            _hero(context),
             const SizedBox(height: 18),
-            _weekStrip(context),
+            _progressRow(context),
             const SizedBox(height: 18),
-            _statsRow(),
+            _quickActions(context),
             const SizedBox(height: 18),
-            Row(
-              children: [
-                Expanded(
-                  child: _QuickAction(
-                    icon: Icons.fitness_center,
-                    title: '查看训练',
-                    subtitle: '当前计划和日历',
-                    color: AppColors.blue,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const TrainingPage()),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _QuickAction(
-                    icon: Icons.restaurant_outlined,
-                    title: '记录今天',
-                    subtitle: '训练和饮食',
-                    color: AppColors.orange,
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const RecordsPage()),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            GestureDetector(
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AiReportPage()),
-              ),
-              child: _insightCard(),
-            ),
+            _insightCard(context),
           ],
         ),
       ),
@@ -73,7 +63,6 @@ class HomePage extends StatelessWidget {
 
   Widget _header(BuildContext context, String? name) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
@@ -88,319 +77,414 @@ class HomePage extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               Text(
-                '今天是训练日',
+                name == null || name.isEmpty ? '今天练什么？' : '今天练什么，$name？',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -1,
+                      letterSpacing: -1.1,
                     ),
               ),
-              if (name != null && name.isNotEmpty) ...[
-                const SizedBox(height: 5),
-                Text(
-                  '准备好，$name。',
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
             ],
           ),
         ),
-        GlassPanel(
-          width: 46,
-          height: 46,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppColors.blueSoft,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(Icons.person, color: AppColors.blue),
+        _GlassCircleButton(
+          icon: Icons.person_outline,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            SoundService.instance.tick();
+          },
         ),
       ],
     );
   }
 
-  Widget _membershipBanner(BuildContext context, bool active) {
-    return GlassPanel(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      decoration: BoxDecoration(
-        color: active ? const Color(0xFFEAF8F0) : const Color(0xFFFFF3E8),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            active ? Icons.workspace_premium : Icons.lock_outline,
-            color: active ? AppColors.green : AppColors.orange,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              active ? '年度会员已开通，全部功能可用。' : '开通年度会员，解锁 AI 计划和训练记录。',
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-        ],
-      ),
-    );
-  }
-
-  Widget _todayHero(BuildContext context) {
-    return GlassPanel(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          colors: [AppColors.navy, AppColors.blue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Text(
-                '今日训练',
-                style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
-              ),
-              Spacer(),
-              Icon(Icons.local_fire_department, color: Color(0xFFFFB15C)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '上肢推',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -1,
-            ),
-          ),
-          const SizedBox(height: 7),
-          const Text(
-            '5 个动作 · 约 45 分钟',
-            style: TextStyle(color: Color(0xFFDCE7FF)),
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const TrainingPage()),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.blue,
-            ),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('开始训练'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _weekStrip(BuildContext context) {
-    final today = DateTime.now();
-    final monday = today.subtract(Duration(days: today.weekday - 1));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '本周节奏',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: List.generate(7, (index) {
-            final date = monday.add(Duration(days: index));
-            final selected = date.day == today.day;
-            final trained = index < 3;
-
-            return Expanded(
-              child: GlassPanel(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                padding: const EdgeInsets.symmetric(vertical: 11),
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.blue : Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: selected ? AppColors.blue : AppColors.border,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      const ['一', '二', '三', '四', '五', '六', '日'][index],
-                      style: TextStyle(
-                        color: selected ? Colors.white70 : AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Icon(
-                      trained ? Icons.check_circle : Icons.circle_outlined,
-                      size: 15,
-                      color: selected
-                          ? Colors.white
-                          : trained
-                              ? AppColors.green
-                              : AppColors.border,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _statsRow() {
-    return const Row(
-      children: [
-        Expanded(child: _HomeStat(value: '4', label: '连续训练')),
-        SizedBox(width: 10),
-        Expanded(child: _HomeStat(value: '3', label: '本周训练')),
-        SizedBox(width: 10),
-        Expanded(child: _HomeStat(value: '86%', label: '完成率')),
-      ],
-    );
-  }
-
-  Widget _insightCard() {
-    return GlassPanel(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GlassPanel(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF0DE),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.auto_awesome, color: AppColors.orange),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '今日建议',
-                  style: TextStyle(fontWeight: FontWeight.w800),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  '训练前完成 5 分钟热身，正式动作保持稳定节奏，不要为了追求重量牺牲动作质量。',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _dateLabel() {
+  Widget _calendarCard(BuildContext context) {
     final now = DateTime.now();
-    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    return '${weekdays[now.weekday - 1]} · ${now.month} 月 ${now.day} 日';
-  }
-}
+    final monday = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
 
-class _HomeStat extends StatelessWidget {
-  const _HomeStat({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassPanel(
-      padding: const EdgeInsets.symmetric(vertical: 17),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.96, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
       child: GlassPanel(
-        padding: const EdgeInsets.all(17),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
+          gradient: const LinearGradient(
+            colors: [Color(0x66FFFFFF), Color(0x33DDEAFF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: const Color(0x55FFFFFF)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 15),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-              ),
+            Row(
+              children: [
+                Text(
+                  '${now.year} 年 ${now.month} 月',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const Spacer(),
+                const GlassBadge(
+                  label: '训练日',
+                  icon: Icons.local_fire_department,
+                  color: AppColors.orange,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: List.generate(7, (index) {
+                final date = monday.add(Duration(days: index));
+                final selected = date.year == _selectedDate.year &&
+                    date.month == _selectedDate.month &&
+                    date.day == _selectedDate.day;
+                final trained = index < 3;
+
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: GestureDetector(
+                      onTap: () => _selectDate(date),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        decoration: BoxDecoration(
+                          color: selected ? AppColors.blue : Colors.transparent,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: selected
+                                ? AppColors.blue
+                                : const Color(0x1A000000),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              const ['一', '二', '三', '四', '五', '六', '日'][index],
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: selected
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              '${date.day}',
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: selected ? Colors.white : AppColors.text,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Icon(
+                              trained ? Icons.check_circle : Icons.circle_outlined,
+                              size: 13,
+                              color: selected
+                                  ? Colors.white
+                                  : trained
+                                      ? AppColors.green
+                                      : AppColors.border,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _hero(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(offset: Offset(0, 18 * (1 - value)), child: child),
+      ),
+      child: GlassPanel(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0A84FF), Color(0xFF5AC8FA), Color(0xFF8ED8FF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: const Color(0x55FFFFFF), width: 1.2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const GlassBadge(
+                  label: '今日训练',
+                  icon: Icons.bolt,
+                  color: Colors.white,
+                ),
+                const Spacer(),
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Icon(Icons.play_arrow, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              '上肢推',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 36,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -1.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '5 个动作  ·  45 分钟  ·  中等强度',
+              style: TextStyle(color: Color(0xE6FFFFFF), fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            LiquidButton(
+              label: '开始训练',
+              icon: Icons.play_arrow_rounded,
+              colors: const [Colors.white, Color(0xFFDDF4FF)],
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                SoundService.instance.complete();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const TrainingPage()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _progressRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: _metric('连续训练', '4', '天', Icons.local_fire_department, AppColors.orange)),
+        const SizedBox(width: 10),
+        Expanded(child: _metric('本周训练', '3', '次', Icons.fitness_center, AppColors.blue)),
+        const SizedBox(width: 10),
+        Expanded(child: _metric('完成率', '86', '%', Icons.trending_up, AppColors.green)),
+      ],
+    );
+  }
+
+  Widget _metric(String label, String value, String unit, IconData icon, Color color) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 500),
+      builder: (context, opacity, child) => Opacity(opacity: opacity, child: child),
+      child: GlassPanel(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
+        decoration: BoxDecoration(
+          color: const Color(0x66FFFFFF),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0x33FFFFFF)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 19),
+            const SizedBox(height: 10),
+            Text.rich(
+              TextSpan(
+                text: value,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                children: [
+                  TextSpan(
+                    text: unit,
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickActions(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _quickAction(
+            context,
+            icon: Icons.calendar_month,
+            title: '训练计划',
+            subtitle: '日历与动作',
+            color: AppColors.blue,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const TrainingPage()),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _quickAction(
+            context,
+            icon: Icons.restaurant_outlined,
+            title: '记录今天',
+            subtitle: '饮食与身体',
+            color: AppColors.orange,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RecordsPage()),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _quickAction(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        SoundService.instance.tick();
+        onTap();
+      },
+      child: GlassPanel(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: const Color(0x66FFFFFF),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0x33FFFFFF)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 18),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _insightCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        SoundService.instance.success();
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AiReportPage()),
+        );
+      },
+      child: GlassPanel(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0x55FFFFFF),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: const Color(0x33FFFFFF)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFE6D9),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.auto_awesome, color: AppColors.orange),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('AI 今日建议', style: TextStyle(fontWeight: FontWeight.w800)),
+                  SizedBox(height: 5),
+                  Text(
+                    '训练前完成 5 分钟热身，动作质量比重量更重要。',
+                    style: TextStyle(color: AppColors.textSecondary, height: 1.45),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _dateLabel() {
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return '${weekdays[_selectedDate.weekday - 1]} · ${_selectedDate.month} 月 ${_selectedDate.day} 日';
+  }
 }
 
+class _GlassCircleButton extends StatelessWidget {
+  const _GlassCircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: GlassPanel(
+        width: 48,
+        height: 48,
+        padding: EdgeInsets.zero,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: const Color(0x66FFFFFF),
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0x33FFFFFF)),
+        ),
+        child: Icon(icon, color: AppColors.text),
+      ),
+    );
+  }
+}
 
