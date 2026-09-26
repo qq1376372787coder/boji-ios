@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check lib/sms.mjs && node --check lib/apple.mjs && node --check routes/mobile.mjs"
+    "check": "node --check lib/sms.mjs && node --check lib/apple.mjs && node --check lib/deepseek.mjs && node --check routes/mobile.mjs && node --check routes/ai_flutter.mjs"
   }
 }

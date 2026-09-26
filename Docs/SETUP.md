@@ -140,3 +140,20 @@ SMS_TEMPLATE_CODE=...
 - 网络错误提示。
 - Apple 沙盒订阅续费。
 - App Store Server Notifications。
+
+## DeepSeek 4.1 Flash
+
+生产 `.env`：
+
+```env
+DEEPSEEK_API_KEY=...
+DEEPSEEK_MODEL=deepseek-v4.1-flash
+```
+
+客户端接口：
+
+```text
+POST /api/ai/summary
+```
+
+未配置 Key 时接口返回示例日报，不会调用外部 AI。
