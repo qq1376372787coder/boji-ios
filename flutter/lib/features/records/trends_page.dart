@@ -16,7 +16,7 @@ class TrendsPage extends StatelessWidget {
     final workoutRecords = records.where((record) => record.kind == 'workout').toList();
     final bodyRecords = records.where((record) => record.kind == 'body').toList();
 
-    return Scaffold(
+    return Scaffold(backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('趋势分析')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),

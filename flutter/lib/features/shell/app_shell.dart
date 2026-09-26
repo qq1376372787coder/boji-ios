@@ -20,7 +20,15 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF7F9FD), Color(0xFFEAF0FF), Color(0xFFF8FBFF)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: IndexedStack(
         index: _index,
         children: const [
           HomePage(),
@@ -28,6 +36,7 @@ class _AppShellState extends State<AppShell> {
           RecordsPage(),
           ProfilePage(),
         ],
+        ),
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

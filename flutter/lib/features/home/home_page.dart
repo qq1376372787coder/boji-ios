@@ -16,7 +16,7 @@ class HomePage extends StatelessWidget {
     final session = context.watch<SessionStore>();
     final active = session.user?.membership.active == true;
 
-    return Scaffold(
+    return Scaffold(backgroundColor: Colors.transparent,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),

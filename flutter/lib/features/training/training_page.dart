@@ -42,7 +42,7 @@ class _TrainingPageState extends State<TrainingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold(backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('训练')),
       body: RefreshIndicator(
         onRefresh: _loadPlan,

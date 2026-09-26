@@ -8,7 +8,7 @@ class GlassCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(18),
     this.radius = 24,
-    this.tint = const Color(0x80FFFFFF),
+    this.tint = const Color(0x66FFFFFF),
     this.borderColor = const Color(0x66FFFFFF),
     this.gradient,
     this.shadow = true,
@@ -179,12 +179,28 @@ class GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveDecoration = decoration ?? BoxDecoration(
+    final original = decoration ?? BoxDecoration(
       color: const Color(0x66FFFFFF),
       borderRadius: BorderRadius.circular(22),
       border: Border.all(color: const Color(0x55FFFFFF)),
     );
-    final radius = effectiveDecoration.borderRadius ?? BorderRadius.circular(22);
+    final radius = original.borderRadius ?? BorderRadius.circular(22);
+    final effectiveDecoration = BoxDecoration(
+      gradient: original.gradient,
+      color: original.gradient == null
+          ? (original.color ?? const Color(0xFFFFFFFF)).withValues(alpha: 0.58)
+          : null,
+      borderRadius: radius,
+      border: original.border ?? Border.all(color: const Color(0x66FFFFFF)),
+      boxShadow: original.boxShadow ??
+          [
+            BoxShadow(
+              color: const Color(0xFF101B2D).withValues(alpha: 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+    );
 
     return Padding(
       padding: margin ?? EdgeInsets.zero,

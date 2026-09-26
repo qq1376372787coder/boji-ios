@@ -11,7 +11,7 @@ class ProfilePage extends StatelessWidget {
     final session = context.watch<SessionStore>();
     final user = session.user;
 
-    return Scaffold(
+    return Scaffold(backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('个人中心')),
       body: ListView(
         padding: const EdgeInsets.all(18),

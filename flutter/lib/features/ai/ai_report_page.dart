@@ -40,7 +40,7 @@ class _AiReportPageState extends State<AiReportPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Scaffold(backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('AI 日报'),
         actions: [
