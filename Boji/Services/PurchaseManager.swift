@@ -42,7 +42,7 @@ final class PurchaseManager: ObservableObject {
                 guard let transaction = try Self.unwrap(verification) else {
                     throw AppError.purchase("Apple 返回了无法验证的交易。")
                 }
-                try await verify(transaction)
+                try await verify(transaction, transactionPayload: transactionPayload(transaction))
                 await transaction.finish()
                 successMessage = "会员开通成功。"
                 await loadProduct()
@@ -73,7 +73,7 @@ final class PurchaseManager: ObservableObject {
             for await verification in Transaction.currentEntitlements {
                 guard let transaction = try Self.unwrap(verification) else { continue }
                 if transaction.productID == productID {
-                    try await verify(transaction)
+                    try await verify(transaction, transactionPayload: transactionPayload(transaction))
                     verifiedAny = true
                 }
             }
@@ -88,16 +88,22 @@ final class PurchaseManager: ObservableObject {
         }
     }
 
-    private func verify(_ transaction: Transaction) async throws {
-        let jws = transaction.jwsRepresentation
+    private func verify(
+        _ transaction: Transaction,
+        transactionPayload: String
+    ) async throws {
         let payload = AppleVerificationRequest(
-            transactionJWS: jws,
+            transactionJWS: transactionPayload,
             environment: transaction.environment == .production ? "production" : "sandbox"
         )
 
         let _: SuccessResponse = try await api.sendAuthorized(
             Endpoint("/api/billing/apple/verify", method: .post, body: payload)
         )
+    }
+
+    private func transactionPayload(_ transaction: Transaction) -> String {
+        String(data: transaction.jsonRepresentation, encoding: .utf8) ?? "{}"
     }
 
     private static func unwrap(
@@ -111,3 +117,5 @@ final class PurchaseManager: ObservableObject {
         }
     }
 }
+
+

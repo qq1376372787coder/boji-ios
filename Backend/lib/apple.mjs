@@ -4,7 +4,9 @@ import { readFileSync } from "node:fs";
 const APPLE_API_AUDIENCE = "appstoreconnect-v1";
 
 export function decodeJwsPayload(jws) {
-  const parts = String(jws || "").split(".");
+  const raw = String(jws || "").trim();
+  if (raw.startsWith("{")) return JSON.parse(raw);
+  const parts = raw.split(".");
   if (parts.length !== 3) throw new Error("Apple JWS 格式不正确。");
   return JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
 }
@@ -175,4 +177,5 @@ function base64url(value) {
   const buffer = Buffer.isBuffer(value) ? value : Buffer.from(String(value), "utf8");
   return buffer.toString("base64url");
 }
+
 
