@@ -1,0 +1,21 @@
+name: Flutter iOS Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter create --platforms=ios --project-name boji .
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
