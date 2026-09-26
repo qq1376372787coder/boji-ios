@@ -131,6 +131,16 @@ class MockApiClient extends ApiClient {
       case '/api/auth/logout':
         _state = null;
         return {'ok': true};
+      case '/api/ai/summary':
+        return {
+          'text': '最近训练节奏稳定，建议继续保持当前频率。',
+          'parsed': {
+            'title': '最近 30 天总结',
+            'rhythm': '训练节奏稳定，建议继续保持每周 3 次的频率。',
+            'nutrition': '今天记录的饮食还比较少，训练后记得补充蛋白质。',
+            'advice': '下一阶段优先保证动作质量，再逐步增加训练容量。',
+          },
+        };
       case '/api/plan/generate':
       case '/api/plan/import':
         return _mockPlan();
@@ -228,5 +238,6 @@ class MockUserState {
     };
   }
 }
+
 
 

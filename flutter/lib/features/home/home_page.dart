@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/session_store.dart';
 import '../../theme/app_theme.dart';
+import '../ai/ai_report_page.dart';
 import '../records/records_page.dart';
 import '../training/training_page.dart';
 
@@ -57,7 +58,12 @@ class HomePage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            _insightCard(),
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AiReportPage()),
+              ),
+              child: _insightCard(),
+            ),
           ],
         ),
       ),
@@ -395,4 +401,5 @@ class _QuickAction extends StatelessWidget {
     );
   }
 }
+
 
