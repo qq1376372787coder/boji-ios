@@ -1,0 +1,19 @@
+# Xcode / macOS
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+.DS_Store
+
+# Secrets
+.env
+*.p8
+*.p12
+*.mobileprovision
+secrets/

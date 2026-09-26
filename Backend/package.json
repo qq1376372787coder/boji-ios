@@ -1,0 +1,9 @@
+{
+  "name": "boji-ios-backend-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check lib/sms.mjs && node --check lib/apple.mjs && node --check routes/mobile.mjs"
+  }
+}
