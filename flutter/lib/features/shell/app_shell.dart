@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../home/home_page.dart';
@@ -27,7 +29,11 @@ class _AppShellState extends State<AppShell> {
           ProfilePage(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
@@ -51,7 +57,9 @@ class _AppShellState extends State<AppShell> {
             selectedIcon: Icon(Icons.person),
             label: '我的',
           ),
-        ],
+          ],
+        ),
+        ),
       ),
     );
   }

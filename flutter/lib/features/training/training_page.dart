@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/session_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/glass.dart';
 import 'workout_session_page.dart';
 
 class TrainingPage extends StatefulWidget {
@@ -95,7 +96,7 @@ class _TrainingPageState extends State<TrainingPage> {
             date.year == today.year;
 
         return Expanded(
-          child: Container(
+          child: GlassPanel(
             margin: const EdgeInsets.symmetric(horizontal: 3),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
@@ -135,7 +136,7 @@ class _TrainingPageState extends State<TrainingPage> {
   Widget _planHero(BuildContext context, PlanPreview plan) {
     final day = plan.days.first;
 
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
@@ -150,7 +151,7 @@ class _TrainingPageState extends State<TrainingPage> {
         children: [
           Row(
             children: [
-              Container(
+              GlassPanel(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0x24FFFFFF),
@@ -212,7 +213,7 @@ class _TrainingPageState extends State<TrainingPage> {
   }
 
   Widget _planDayCard(BuildContext context, int index, PlanDay day) {
-    return Container(
+    return GlassPanel(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -225,7 +226,7 @@ class _TrainingPageState extends State<TrainingPage> {
         children: [
           Row(
             children: [
-              Container(
+              GlassPanel(
                 width: 42,
                 height: 42,
                 alignment: Alignment.center,
@@ -265,7 +266,7 @@ class _TrainingPageState extends State<TrainingPage> {
   }
 
   Widget _emptyPlan() {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -291,7 +292,7 @@ class _TrainingPageState extends State<TrainingPage> {
   }
 
   Widget _errorView() {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF0F0),
@@ -316,7 +317,7 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,

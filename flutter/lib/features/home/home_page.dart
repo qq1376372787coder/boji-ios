@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/session_store.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/glass.dart';
 import '../ai/ai_report_page.dart';
 import '../records/records_page.dart';
 import '../training/training_page.dart';
@@ -103,7 +104,7 @@ class HomePage extends StatelessWidget {
             ],
           ),
         ),
-        Container(
+        GlassPanel(
           width: 46,
           height: 46,
           alignment: Alignment.center,
@@ -118,7 +119,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _membershipBanner(BuildContext context, bool active) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       decoration: BoxDecoration(
         color: active ? const Color(0xFFEAF8F0) : const Color(0xFFFFF3E8),
@@ -144,7 +145,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _todayHero(BuildContext context) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
@@ -218,7 +219,7 @@ class HomePage extends StatelessWidget {
             final trained = index < 3;
 
             return Expanded(
-              child: Container(
+              child: GlassPanel(
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 decoration: BoxDecoration(
@@ -270,7 +271,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _insightCard() {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -280,7 +281,7 @@ class HomePage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          GlassPanel(
             width: 42,
             height: 42,
             alignment: Alignment.center,
@@ -330,7 +331,7 @@ class _HomeStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.symmetric(vertical: 17),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -374,7 +375,7 @@ class _QuickAction extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
-      child: Container(
+      child: GlassPanel(
         padding: const EdgeInsets.all(17),
         decoration: BoxDecoration(
           color: Colors.white,

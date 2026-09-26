@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/session_store.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/glass.dart';
 
 class AiReportPage extends StatefulWidget {
   const AiReportPage({super.key});
@@ -70,7 +71,7 @@ class _AiReportPageState extends State<AiReportPage> {
 
   List<Widget> _reportView(Map<String, dynamic> report) {
     return [
-      Container(
+      GlassPanel(
         padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
           gradient: const LinearGradient(colors: [AppColors.navy, AppColors.blue]),
@@ -140,7 +141,7 @@ class _AiReportPageState extends State<AiReportPage> {
     required String text,
     required Color color,
   }) {
-    return Container(
+    return GlassPanel(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -151,7 +152,7 @@ class _AiReportPageState extends State<AiReportPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          GlassPanel(
             width: 42,
             height: 42,
             alignment: Alignment.center,
@@ -184,7 +185,7 @@ class _AiReportPageState extends State<AiReportPage> {
   }
 
   Widget _errorView() {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF0F0),

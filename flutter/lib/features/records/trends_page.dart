@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/glass.dart';
 
 class TrendsPage extends StatelessWidget {
   const TrendsPage({super.key, required this.records});
@@ -58,7 +59,7 @@ class TrendsPage extends StatelessWidget {
       (sum, record) => sum + ((record.payload['completed_sets'] as num?)?.toInt() ?? 0),
     );
 
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [AppColors.navy, AppColors.blue]),
@@ -99,7 +100,7 @@ class TrendsPage extends StatelessWidget {
     required String subtitle,
     required Widget child,
   }) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -130,7 +131,7 @@ class TrendsPage extends StatelessWidget {
         ? '记录体重后，这里会显示长期变化。'
         : '最近记录了 ${bodyRecords.length} 次身体数据，建议固定时间测量。';
 
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,

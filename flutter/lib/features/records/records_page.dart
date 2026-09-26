@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/session_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/glass.dart';
 import 'trends_page.dart';
 
 class RecordsPage extends StatefulWidget {
@@ -348,7 +349,7 @@ class _RecordsPageState extends State<RecordsPage> {
       _ => '${record.payload['completed_sets'] ?? 0}/${record.payload['total_sets'] ?? 0} 组',
     };
 
-    return Container(
+    return GlassPanel(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -358,7 +359,7 @@ class _RecordsPageState extends State<RecordsPage> {
       ),
       child: Row(
         children: [
-          Container(
+          GlassPanel(
             width: 42,
             height: 42,
             alignment: Alignment.center,
@@ -399,7 +400,7 @@ class _RecordsPageState extends State<RecordsPage> {
   }
 
   Widget _summaryCard(int completed, int totalSets) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [AppColors.navy, AppColors.blue]),
@@ -440,7 +441,7 @@ class _RecordsPageState extends State<RecordsPage> {
       (sum, record) => sum + ((record.payload['protein'] as num?)?.toDouble() ?? 0),
     );
 
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -473,7 +474,7 @@ class _RecordsPageState extends State<RecordsPage> {
   Widget _bodyMetricCard(List<CheckinRecord> records) {
     final weight = records.isEmpty ? '--' : '${records.first.payload['weight_kg'] ?? '--'} kg';
 
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -503,7 +504,7 @@ class _RecordsPageState extends State<RecordsPage> {
     required String action,
     required VoidCallback onAction,
   }) {
-    return Container(
+    return GlassPanel(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
