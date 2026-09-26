@@ -18,6 +18,11 @@ class PurchaseService extends ChangeNotifier {
   bool purchasing = false;
   String? message;
 
+  void showMessage(String value) {
+    message = value;
+    notifyListeners();
+  }
+
   Future<void> initialize() async {
     _subscription = _store.purchaseStream.listen(
       _onPurchases,
@@ -116,6 +121,7 @@ class PurchaseService extends ChangeNotifier {
     super.dispose();
   }
 }
+
 
 
 

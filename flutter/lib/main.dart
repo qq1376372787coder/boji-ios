@@ -11,14 +11,9 @@ import 'services/push_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await PushService.instance.initialize();
 
   final session = SessionStore();
   final purchase = PurchaseService(api: session.api);
-  await Future.wait([
-    session.bootstrap(),
-    purchase.initialize(),
-  ]);
 
   runApp(
     MultiProvider(
@@ -29,6 +24,18 @@ Future<void> main() async {
       child: const BojiApp(),
     ),
   );
+
+  try {
+    await PushService.instance.initialize();
+  } catch (_) {
+    // Some platforms do not provide a local notifications implementation.
+  }
+  await session.bootstrap();
+  try {
+    await purchase.initialize();
+  } catch (error) {
+    purchase.showMessage(error.toString());
+  }
 }
 
 class BojiApp extends StatelessWidget {
@@ -83,3 +90,5 @@ class RootGate extends StatelessWidget {
     }
   }
 }
+
+
