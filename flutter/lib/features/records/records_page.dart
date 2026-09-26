@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/session_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import 'trends_page.dart';
 
 class RecordsPage extends StatefulWidget {
   const RecordsPage({super.key});
@@ -176,7 +177,19 @@ class _RecordsPageState extends State<RecordsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('记录')),
+      appBar: AppBar(
+        title: const Text('记录'),
+        actions: [
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => TrendsPage(records: _records),
+              ),
+            ),
+            icon: const Icon(Icons.insights_outlined),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _loadRecords,
         child: ListView(
@@ -528,3 +541,4 @@ class _Macro extends StatelessWidget {
     );
   }
 }
+
