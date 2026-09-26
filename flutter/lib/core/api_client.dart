@@ -14,6 +14,10 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+ApiClient createApiClient() {
+  return AppConfig.useMockApi ? MockApiClient() : ApiClient();
+}
+
 class ApiClient {
   ApiClient({http.Client? client}) : _client = client ?? http.Client();
 
@@ -76,3 +80,140 @@ class ApiClient {
     return body;
   }
 }
+
+
+class MockApiClient extends ApiClient {
+  MockUserState? _state;
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    bool authorized = true,
+  }) async {
+    if (path == '/api/me') {
+      return _userResponse();
+    }
+    throw const ApiException('Mock endpoint not implemented.');
+  }
+
+  @override
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authorized = true,
+  }) async {
+    switch (path) {
+      case '/api/auth/sms/send':
+        return {'ok': true, 'retry_after': 60, 'debug_code': '123456'};
+      case '/api/auth/sms/verify':
+        final phone = body?['phone']?.toString() ?? '';
+        _state = MockUserState.fromPhone(phone);
+        return {
+          'access_token': 'mock-access-token',
+          'refresh_token': 'mock-refresh-token',
+          'user': _state!.asJson(),
+        };
+      case '/api/onboarding':
+        _state?.onboarded = true;
+        return _userResponse();
+      case '/api/auth/logout':
+        _state = null;
+        return {'ok': true};
+      case '/api/plan/generate':
+      case '/api/plan/import':
+        return _mockPlan();
+      case '/api/plan/version':
+        return {
+          'version': {'id': 1, 'version': 1, 'member': 'me'}
+        };
+      case '/api/billing/apple/verify':
+        _state?.membershipActive = true;
+        return {
+          'ok': true,
+          'membership': _membership(),
+        };
+      default:
+        throw const ApiException('Mock endpoint not implemented.');
+    }
+  }
+
+  Map<String, dynamic> _userResponse() {
+    final state = _state;
+    if (state == null) throw const ApiException('请先登录。');
+    return state.asJson();
+  }
+
+  Map<String, dynamic> _membership() {
+    return {
+      'active': _state?.membershipActive == true,
+      'status': _state?.membershipActive == true ? 'active' : 'none',
+      'expires_at': _state?.membershipActive == true
+          ? DateTime.now().add(const Duration(days: 365)).toIso8601String()
+          : null,
+    };
+  }
+
+  Map<String, dynamic> _mockPlan() {
+    return {
+      'summary': '根据你的目标和训练条件，安排一份循序渐进的训练计划。',
+      'plans': [
+        {
+          'name': '第 1 天 · 上肢推',
+          'note': '控制动作节奏，最后一组保留 1–2 次余力。',
+          'exercises': [
+            ['哑铃卧推', 4, '8–12', 'weight'],
+            ['哑铃肩推', 3, '8–12', 'weight'],
+            ['俯卧撑', 3, '10–15', 'bodyweight'],
+          ],
+        },
+        {
+          'name': '第 2 天 · 下肢',
+          'note': '注意膝盖和脚尖方向一致。',
+          'exercises': [
+            ['高脚杯深蹲', 4, '8–12', 'weight'],
+            ['哑铃硬拉', 3, '8–12', 'weight'],
+            ['臀桥', 3, '12–15', 'bodyweight'],
+          ],
+        },
+      ],
+    };
+  }
+}
+
+class MockUserState {
+  MockUserState({
+    required this.phone,
+    required this.onboarded,
+    required this.membershipActive,
+  });
+
+  factory MockUserState.fromPhone(String phone) {
+    final isVipTestAccount = phone == '+8613800138000';
+    return MockUserState(
+      phone: phone,
+      onboarded: isVipTestAccount,
+      membershipActive: isVipTestAccount,
+    );
+  }
+
+  String phone;
+  bool onboarded;
+  bool membershipActive;
+
+  Map<String, dynamic> asJson() {
+    return {
+      'id': phone.endsWith('138000') ? 1001 : 1002,
+      'phone': phone,
+      'display_name': phone.endsWith('138000') ? 'VIP 测试账号' : '新用户测试账号',
+      'onboarded': onboarded,
+      'membership': {
+        'active': membershipActive,
+        'status': membershipActive ? 'active' : 'none',
+        'expires_at': membershipActive
+            ? DateTime.now().add(const Duration(days: 365)).toIso8601String()
+            : null,
+      },
+    };
+  }
+}
+

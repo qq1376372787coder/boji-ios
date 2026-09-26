@@ -8,7 +8,7 @@ enum SessionPhase { launching, loggedOut, onboarding, ready }
 
 class SessionStore extends ChangeNotifier {
   SessionStore({ApiClient? api, FlutterSecureStorage? storage})
-      : api = api ?? ApiClient(),
+      : api = api ?? createApiClient(),
         _storage = storage ?? const FlutterSecureStorage();
 
   final ApiClient api;
@@ -90,3 +90,4 @@ class SessionStore extends ChangeNotifier {
     notifyListeners();
   }
 }
+

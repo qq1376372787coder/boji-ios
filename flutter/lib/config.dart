@@ -7,5 +7,9 @@ class AppConfig {
     'APPLE_PRODUCT_ID',
     defaultValue: 'cloud.gongxiang.boji.annual12',
   );
+  static const useMockApi = bool.fromEnvironment(
+    'USE_MOCK_API',
+    defaultValue: false,
+  );
   static const appName = '薄肌俱乐部';
 }

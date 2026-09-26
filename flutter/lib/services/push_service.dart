@@ -23,3 +23,4 @@ class PushService {
         ?.requestPermissions(alert: true, badge: true, sound: true);
   }
 }
+

@@ -7,7 +7,7 @@ import '../config.dart';
 import '../core/api_client.dart';
 
 class PurchaseService extends ChangeNotifier {
-  PurchaseService({ApiClient? api}) : api = api ?? ApiClient();
+  PurchaseService({ApiClient? api}) : api = api ?? createApiClient();
 
   final ApiClient api;
   final InAppPurchase _store = InAppPurchase.instance;
@@ -121,6 +121,7 @@ class PurchaseService extends ChangeNotifier {
     super.dispose();
   }
 }
+
 
 
 
