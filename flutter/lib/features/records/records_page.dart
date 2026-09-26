@@ -14,7 +14,7 @@ class RecordsPage extends StatefulWidget {
 
 class _RecordsPageState extends State<RecordsPage> {
   int _tab = 0;
-  List<TrainingRecord> _records = [];
+  List<CheckinRecord> _records = [];
   bool _loading = true;
 
   @override
@@ -27,16 +27,150 @@ class _RecordsPageState extends State<RecordsPage> {
     setState(() => _loading = true);
     try {
       final data = await context.read<SessionStore>().api.get('/api/checkins');
-      final items = (data['records'] as List? ?? const [])
+      final records = (data['records'] as List? ?? const [])
           .whereType<Map>()
-          .map((item) => TrainingRecord.fromJson(Map<String, dynamic>.from(item)))
+          .map((item) => CheckinRecord.fromJson(Map<String, dynamic>.from(item)))
           .toList();
-      setState(() => _records = items);
+      setState(() => _records = records);
     } catch (_) {
       setState(() => _records = []);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  List<CheckinRecord> _byKind(String kind) {
+    return _records.where((record) => record.kind == kind).toList();
+  }
+
+  Future<void> _saveCheckin(String kind, Map<String, dynamic> payload) async {
+    await context.read<SessionStore>().api.post(
+      '/api/checkin',
+      body: {
+        'kind': kind,
+        'checkin_date': DateTime.now().toIso8601String().substring(0, 10),
+        'payload': payload,
+      },
+    );
+    if (mounted) await _loadRecords();
+  }
+
+  Future<void> _showMealDialog() async {
+    final nameController = TextEditingController();
+    final caloriesController = TextEditingController();
+    final proteinController = TextEditingController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录饮食',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: '吃了什么'),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: caloriesController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '热量 kcal'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: proteinController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '蛋白质 g'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: () async {
+                await _saveCheckin('meal', {
+                  'title': nameController.text.trim().isEmpty
+                      ? '饮食记录'
+                      : nameController.text.trim(),
+                  'calories': int.tryParse(caloriesController.text) ?? 0,
+                  'protein': double.tryParse(proteinController.text) ?? 0,
+                });
+                if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+              },
+              child: const Text('保存饮食记录'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBodyDialog() async {
+    final weightController = TextEditingController();
+    final noteController = TextEditingController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '记录身体状态',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: weightController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: '当前体重 kg'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              decoration: const InputDecoration(labelText: '今天的身体状态（可选）'),
+            ),
+            const SizedBox(height: 18),
+            FilledButton(
+              onPressed: () async {
+                await _saveCheckin('body', {
+                  'weight_kg': double.tryParse(weightController.text),
+                  'note': noteController.text.trim(),
+                });
+                if (sheetContext.mounted) Navigator.of(sheetContext).pop();
+              },
+              child: const Text('保存身体状态'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -78,27 +212,95 @@ class _RecordsPageState extends State<RecordsPage> {
   }
 
   Widget _trainingRecords() {
-    final totalSets = _records.fold<int>(0, (sum, record) => sum + record.completedSets);
-    final completed = _records.length;
+    final records = _byKind('workout');
+    final totalSets = records.fold<int>(
+      0,
+      (sum, record) => sum + ((record.payload['completed_sets'] as num?)?.toInt() ?? 0),
+    );
 
     return Column(
       children: [
-        _summaryCard(completed, totalSets),
+        _summaryCard(records.length, totalSets),
         const SizedBox(height: 16),
-        if (_records.isEmpty)
+        if (records.isEmpty)
           _emptyState(
             icon: Icons.fitness_center,
             title: '完成第一次训练后，记录会出现在这里',
             description: '训练重量、次数和总容量会自动整理成趋势。',
             action: '去训练',
+            onAction: () {},
           )
         else
-          ..._records.map(_trainingRecordTile),
+          ...records.map(_recordTile),
       ],
     );
   }
 
-  Widget _trainingRecordTile(TrainingRecord record) {
+  Widget _nutritionRecords() {
+    final records = _byKind('meal');
+
+    return Column(
+      children: [
+        _macroCard(records),
+        const SizedBox(height: 16),
+        if (records.isEmpty)
+          _emptyState(
+            icon: Icons.restaurant_outlined,
+            title: '还没有饮食记录',
+            description: '记录今天吃了什么，之后可以接入拍照识别。',
+            action: '记录饮食',
+            onAction: _showMealDialog,
+          )
+        else ...[
+          FilledButton.icon(
+            onPressed: _showMealDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('继续记录饮食'),
+          ),
+          const SizedBox(height: 14),
+          ...records.map(_recordTile),
+        ],
+      ],
+    );
+  }
+
+  Widget _bodyRecords() {
+    final records = _byKind('body');
+
+    return Column(
+      children: [
+        _bodyMetricCard(records),
+        const SizedBox(height: 16),
+        if (records.isEmpty)
+          _emptyState(
+            icon: Icons.monitor_weight_outlined,
+            title: '还没有身体数据',
+            description: '记录体重和身体状态，观察长期变化。',
+            action: '记录身体状态',
+            onAction: _showBodyDialog,
+          )
+        else ...[
+          FilledButton.icon(
+            onPressed: _showBodyDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('继续记录身体状态'),
+          ),
+          const SizedBox(height: 14),
+          ...records.map(_recordTile),
+        ],
+      ],
+    );
+  }
+
+  Widget _recordTile(CheckinRecord record) {
+    final title = record.payload['title']?.toString() ??
+        (record.kind == 'body' ? '身体状态' : record.kind == 'meal' ? '饮食记录' : '训练记录');
+    final subtitle = switch (record.kind) {
+      'meal' => '${record.payload['calories'] ?? 0} kcal · 蛋白 ${record.payload['protein'] ?? 0} g',
+      'body' => '${record.payload['weight_kg'] ?? '--'} kg${record.payload['note'] == null ? '' : ' · ${record.payload['note']}'}',
+      _ => '${record.payload['completed_sets'] ?? 0}/${record.payload['total_sets'] ?? 0} 组',
+    };
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
@@ -117,20 +319,24 @@ class _RecordsPageState extends State<RecordsPage> {
               color: AppColors.blueSoft,
               borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(Icons.fitness_center, color: AppColors.blue),
+            child: Icon(
+              record.kind == 'meal'
+                  ? Icons.restaurant_outlined
+                  : record.kind == 'body'
+                      ? Icons.monitor_weight_outlined
+                      : Icons.fitness_center,
+              color: AppColors.blue,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  record.title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
-                ),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
                 Text(
-                  '${record.completedSets}/${record.totalSets} 组 · ${record.durationSeconds ~/ 60} 分钟',
+                  subtitle,
                   style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
               ],
@@ -142,36 +348,6 @@ class _RecordsPageState extends State<RecordsPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _nutritionRecords() {
-    return Column(
-      children: [
-        _macroCard(),
-        const SizedBox(height: 16),
-        _emptyState(
-          icon: Icons.restaurant_outlined,
-          title: '还没有饮食记录',
-          description: '拍照或手动记录今天吃了什么。',
-          action: '记录饮食',
-        ),
-      ],
-    );
-  }
-
-  Widget _bodyRecords() {
-    return Column(
-      children: [
-        _bodyMetricCard(),
-        const SizedBox(height: 16),
-        _emptyState(
-          icon: Icons.monitor_weight_outlined,
-          title: '还没有身体数据',
-          description: '记录体重和身体状态，观察长期变化。',
-          action: '记录身体状态',
-        ),
-      ],
     );
   }
 
@@ -207,7 +383,16 @@ class _RecordsPageState extends State<RecordsPage> {
     );
   }
 
-  Widget _macroCard() {
+  Widget _macroCard(List<CheckinRecord> records) {
+    final calories = records.fold<int>(
+      0,
+      (sum, record) => sum + ((record.payload['calories'] as num?)?.toInt() ?? 0),
+    );
+    final protein = records.fold<double>(
+      0,
+      (sum, record) => sum + ((record.payload['protein'] as num?)?.toDouble() ?? 0),
+    );
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -215,19 +400,19 @@ class _RecordsPageState extends State<RecordsPage> {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('今天摄入', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          SizedBox(height: 18),
+          const Text('今天摄入', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(child: _Macro(label: '热量', value: '0 / 2100')),
-              Expanded(child: _Macro(label: '蛋白质', value: '0 / 130g')),
+              Expanded(child: _Macro(label: '热量', value: '$calories / 2100')),
+              Expanded(child: _Macro(label: '蛋白质', value: '${protein.toStringAsFixed(1)} / 130g')),
             ],
           ),
-          SizedBox(height: 12),
-          Row(
+          const SizedBox(height: 12),
+          const Row(
             children: [
               Expanded(child: _Macro(label: '碳水', value: '0 / 240g')),
               Expanded(child: _Macro(label: '脂肪', value: '0 / 70g')),
@@ -238,7 +423,9 @@ class _RecordsPageState extends State<RecordsPage> {
     );
   }
 
-  Widget _bodyMetricCard() {
+  Widget _bodyMetricCard(List<CheckinRecord> records) {
+    final weight = records.isEmpty ? '--' : '${records.first.payload['weight_kg'] ?? '--'} kg';
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -246,15 +433,15 @@ class _RecordsPageState extends State<RecordsPage> {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('身体趋势', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          SizedBox(height: 18),
+          const Text('身体趋势', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(child: _Macro(label: '当前体重', value: '-- kg')),
-              Expanded(child: _Macro(label: '目标体重', value: '-- kg')),
+              Expanded(child: _Macro(label: '当前体重', value: weight)),
+              const Expanded(child: _Macro(label: '目标体重', value: '-- kg')),
             ],
           ),
         ],
@@ -267,6 +454,7 @@ class _RecordsPageState extends State<RecordsPage> {
     required String title,
     required String description,
     required String action,
+    required VoidCallback onAction,
   }) {
     return Container(
       padding: const EdgeInsets.all(28),
@@ -291,7 +479,7 @@ class _RecordsPageState extends State<RecordsPage> {
             style: const TextStyle(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 18),
-          OutlinedButton(onPressed: () {}, child: Text(action)),
+          OutlinedButton(onPressed: onAction, child: Text(action)),
         ],
       ),
     );

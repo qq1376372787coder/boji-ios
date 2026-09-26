@@ -207,3 +207,27 @@ class TrainingRecord {
     );
   }
 }
+
+
+class CheckinRecord {
+  const CheckinRecord({
+    required this.id,
+    required this.kind,
+    required this.date,
+    required this.payload,
+  });
+
+  final int id;
+  final String kind;
+  final DateTime date;
+  final Map<String, dynamic> payload;
+
+  factory CheckinRecord.fromJson(Map<String, dynamic> json) {
+    return CheckinRecord(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      kind: json['kind']?.toString() ?? 'workout',
+      date: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      payload: Map<String, dynamic>.from(json['payload'] as Map? ?? const {}),
+    );
+  }
+}
