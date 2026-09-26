@@ -204,15 +204,15 @@ class _PlanFlowPageState extends State<PlanFlowPage> {
     return _panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('自由训练', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-          SizedBox(height: 8),
-          Text('不设置固定计划，直接从今天开始记录训练。'),
-          SizedBox(height: 14),
+        children: [
+          const Text('自由训练', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          const Text('不设置固定计划，直接从今天开始记录训练。'),
+          const SizedBox(height: 14),
           FilledButton.icon(
             onPressed: null,
-            icon: Icon(Icons.fitness_center),
-            label: Text('开始自由训练'),
+            icon: const Icon(Icons.fitness_center),
+            label: const Text('开始自由训练'),
           ),
         ],
       ),
@@ -267,3 +267,6 @@ class _PlanFlowPageState extends State<PlanFlowPage> {
     );
   }
 }
+
+
+

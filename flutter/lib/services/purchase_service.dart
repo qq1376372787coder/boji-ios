@@ -33,7 +33,7 @@ class PurchaseService extends ChangeNotifier {
     loading = true;
     notifyListeners();
     try {
-      final response = await _store.queryProductDetails({Config.appleProductID});
+      final response = await _store.queryProductDetails({AppConfig.appleProductID});
       product = response.productDetails.isEmpty ? null : response.productDetails.first;
       if (product == null) {
         message = '暂时无法加载 Apple 会员商品。';
@@ -91,7 +91,7 @@ class PurchaseService extends ChangeNotifier {
             body: {
               'transaction_jws':
                   purchase.verificationData.serverVerificationData,
-              'environment': purchase.verificationData.environment,
+              'environment': purchase.verificationData.source,
             },
           );
           message = '会员开通成功。';
@@ -116,4 +116,6 @@ class PurchaseService extends ChangeNotifier {
     super.dispose();
   }
 }
+
+
 

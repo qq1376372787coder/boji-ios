@@ -31,7 +31,7 @@ class PaywallPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            purchase.product?.displayPrice ?? '¥6',
+            purchase.product?.price ?? '¥6',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w800),
           ),
@@ -100,3 +100,4 @@ class _Benefit extends StatelessWidget {
     );
   }
 }
+

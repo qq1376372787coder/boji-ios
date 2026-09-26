@@ -42,7 +42,7 @@ void main() {
   });
 
   test('serializes onboarding payload', () {
-    final payload = OnboardingPayload(
+    const payload = OnboardingPayload(
       gender: 'male',
       age: 25,
       heightCm: 175,
@@ -61,3 +61,4 @@ void main() {
     expect(payload.toJson()['equipment'], ['bodyweight', 'dumbbell']);
   });
 }
+

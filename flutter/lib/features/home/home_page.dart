@@ -105,7 +105,7 @@ class HomePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.16),
+                  color: const Color(0x29FFFFFF),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -216,4 +216,5 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
 
