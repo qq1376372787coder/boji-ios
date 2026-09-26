@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'token_storage.dart';
 
 import '../models/models.dart';
 import 'api_client.dart';
@@ -7,12 +7,12 @@ import 'api_client.dart';
 enum SessionPhase { launching, loggedOut, onboarding, ready }
 
 class SessionStore extends ChangeNotifier {
-  SessionStore({ApiClient? api, FlutterSecureStorage? storage})
+  SessionStore({ApiClient? api, TokenStorage? storage})
       : api = api ?? createApiClient(),
-        _storage = storage ?? const FlutterSecureStorage();
+        _storage = storage ?? TokenStorage();
 
   final ApiClient api;
-  final FlutterSecureStorage _storage;
+  final TokenStorage _storage;
 
   SessionPhase phase = SessionPhase.launching;
   AppUser? user;
@@ -22,7 +22,7 @@ class SessionStore extends ChangeNotifier {
     phase = SessionPhase.launching;
     notifyListeners();
 
-    final token = await _storage.read(key: 'access_token') ?? '';
+    final token = await _storage.read(key: 'access_token');
     if (token.isEmpty) {
       phase = SessionPhase.loggedOut;
       notifyListeners();
@@ -90,4 +90,6 @@ class SessionStore extends ChangeNotifier {
     notifyListeners();
   }
 }
+
+
 

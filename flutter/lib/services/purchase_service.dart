@@ -10,7 +10,7 @@ class PurchaseService extends ChangeNotifier {
   PurchaseService({ApiClient? api}) : api = api ?? createApiClient();
 
   final ApiClient api;
-  final InAppPurchase _store = InAppPurchase.instance;
+  InAppPurchase? _store;
 
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   ProductDetails? product;
@@ -24,7 +24,7 @@ class PurchaseService extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
-    _subscription = _store.purchaseStream.listen(
+    _subscription = _store?.purchaseStream.listen(
       _onPurchases,
       onError: (Object error) {
         message = error.toString();
@@ -38,8 +38,9 @@ class PurchaseService extends ChangeNotifier {
     loading = true;
     notifyListeners();
     try {
-      final response = await _store.queryProductDetails({AppConfig.appleProductID});
-      product = response.productDetails.isEmpty ? null : response.productDetails.first;
+      final response = await _store?.queryProductDetails({AppConfig.appleProductID});
+      final products = response?.productDetails ?? const <ProductDetails>[];
+      product = products.isEmpty ? null : products.first;
       if (product == null) {
         message = '暂时无法加载 Apple 会员商品。';
       }
@@ -63,7 +64,7 @@ class PurchaseService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _store.buyNonConsumable(
+      await _store?.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: current),
       );
     } catch (error) {
@@ -78,7 +79,7 @@ class PurchaseService extends ChangeNotifier {
     message = null;
     notifyListeners();
     try {
-      await _store.restorePurchases();
+      await _store?.restorePurchases();
     } catch (error) {
       message = error.toString();
     }
@@ -108,7 +109,7 @@ class PurchaseService extends ChangeNotifier {
       }
 
       if (purchase.pendingCompletePurchase) {
-        await _store.completePurchase(purchase);
+        await _store?.completePurchase(purchase);
       }
     }
     purchasing = false;
@@ -121,6 +122,10 @@ class PurchaseService extends ChangeNotifier {
     super.dispose();
   }
 }
+
+
+
+
 
 
 
