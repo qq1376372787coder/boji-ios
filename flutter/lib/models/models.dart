@@ -176,3 +176,34 @@ class PlanPreview {
     );
   }
 }
+
+
+class TrainingRecord {
+  const TrainingRecord({
+    required this.id,
+    required this.date,
+    required this.title,
+    required this.durationSeconds,
+    required this.totalSets,
+    required this.completedSets,
+  });
+
+  final int id;
+  final DateTime date;
+  final String title;
+  final int durationSeconds;
+  final int totalSets;
+  final int completedSets;
+
+  factory TrainingRecord.fromJson(Map<String, dynamic> json) {
+    final payload = Map<String, dynamic>.from(json['payload'] as Map? ?? const {});
+    return TrainingRecord(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      date: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      title: payload['title']?.toString() ?? '训练记录',
+      durationSeconds: (payload['duration_seconds'] as num?)?.toInt() ?? 0,
+      totalSets: (payload['total_sets'] as num?)?.toInt() ?? 0,
+      completedSets: (payload['completed_sets'] as num?)?.toInt() ?? 0,
+    );
+  }
+}

@@ -84,6 +84,7 @@ class ApiClient {
 
 class MockApiClient extends ApiClient {
   MockUserState? _state;
+  final List<Map<String, dynamic>> _records = [];
 
   @override
   Future<Map<String, dynamic>> get(
@@ -92,6 +93,9 @@ class MockApiClient extends ApiClient {
   }) async {
     if (path == '/api/me') {
       return _userResponse();
+    }
+    if (path == '/api/checkins') {
+      return {'records': _records};
     }
     throw const ApiException('Mock endpoint not implemented.');
   }
@@ -116,6 +120,14 @@ class MockApiClient extends ApiClient {
       case '/api/onboarding':
         _state?.onboarded = true;
         return _userResponse();
+      case '/api/checkin':
+        _records.insert(0, {
+          'id': _records.length + 1,
+          'created_at': DateTime.now().toIso8601String(),
+          'kind': body?['kind'] ?? 'workout',
+          'payload': body?['payload'] ?? const {},
+        });
+        return {'ok': true};
       case '/api/auth/logout':
         _state = null;
         return {'ok': true};
@@ -216,4 +228,5 @@ class MockUserState {
     };
   }
 }
+
 

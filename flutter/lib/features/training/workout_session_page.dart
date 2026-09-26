@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/session_store.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 
@@ -70,6 +72,24 @@ class _WorkoutSessionPageState extends State<WorkoutSessionPage> {
 
   Future<void> _finishWorkout() async {
     final completed = _completedCount;
+    try {
+      await context.read<SessionStore>().api.post(
+        '/api/checkin',
+        body: {
+          'kind': 'workout',
+          'checkin_date': DateTime.now().toIso8601String().substring(0, 10),
+          'payload': {
+            'title': widget.day.name,
+            'duration_seconds': _elapsedSeconds,
+            'total_sets': _totalSets,
+            'completed_sets': completed,
+          },
+        },
+      );
+    } catch (_) {
+      // Keep the workout usable when history saving is unavailable.
+    }
+    if (!mounted) return;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -305,5 +325,7 @@ class _WorkoutSessionPageState extends State<WorkoutSessionPage> {
     return '$minutes:${remainder.toString().padLeft(2, '0')}';
   }
 }
+
+
 
 

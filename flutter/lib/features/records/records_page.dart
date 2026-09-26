@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../core/session_store.dart';
+import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 
 class RecordsPage extends StatefulWidget {
@@ -11,44 +14,134 @@ class RecordsPage extends StatefulWidget {
 
 class _RecordsPageState extends State<RecordsPage> {
   int _tab = 0;
+  List<TrainingRecord> _records = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecords();
+  }
+
+  Future<void> _loadRecords() async {
+    setState(() => _loading = true);
+    try {
+      final data = await context.read<SessionStore>().api.get('/api/checkins');
+      final items = (data['records'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => TrainingRecord.fromJson(Map<String, dynamic>.from(item)))
+          .toList();
+      setState(() => _records = items);
+    } catch (_) {
+      setState(() => _records = []);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('记录')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
-        children: [
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 0, label: Text('训练')),
-              ButtonSegment(value: 1, label: Text('饮食')),
-              ButtonSegment(value: 2, label: Text('身体')),
-            ],
-            selected: {_tab},
-            onSelectionChanged: (selection) => setState(() => _tab = selection.first),
-          ),
-          const SizedBox(height: 18),
-          if (_tab == 0) _trainingRecords(),
-          if (_tab == 1) _nutritionRecords(),
-          if (_tab == 2) _bodyRecords(),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _loadRecords,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+          children: [
+            SegmentedButton<int>(
+              segments: const [
+                ButtonSegment(value: 0, label: Text('训练')),
+                ButtonSegment(value: 1, label: Text('饮食')),
+                ButtonSegment(value: 2, label: Text('身体')),
+              ],
+              selected: {_tab},
+              onSelectionChanged: (selection) => setState(() => _tab = selection.first),
+            ),
+            const SizedBox(height: 18),
+            if (_loading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_tab == 0)
+              _trainingRecords()
+            else if (_tab == 1)
+              _nutritionRecords()
+            else
+              _bodyRecords(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _trainingRecords() {
+    final totalSets = _records.fold<int>(0, (sum, record) => sum + record.completedSets);
+    final completed = _records.length;
+
     return Column(
       children: [
-        _summaryCard(),
+        _summaryCard(completed, totalSets),
         const SizedBox(height: 16),
-        _emptyState(
-          icon: Icons.fitness_center,
-          title: '完成第一次训练后，记录会出现在这里',
-          description: '训练重量、次数和总容量会自动整理成趋势。',
-          action: '去训练',
-        ),
+        if (_records.isEmpty)
+          _emptyState(
+            icon: Icons.fitness_center,
+            title: '完成第一次训练后，记录会出现在这里',
+            description: '训练重量、次数和总容量会自动整理成趋势。',
+            action: '去训练',
+          )
+        else
+          ..._records.map(_trainingRecordTile),
       ],
+    );
+  }
+
+  Widget _trainingRecordTile(TrainingRecord record) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.blueSoft,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: const Icon(Icons.fitness_center, color: AppColors.blue),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  record.title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${record.completedSets}/${record.totalSets} 组 · ${record.durationSeconds ~/ 60} 分钟',
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${record.date.month}/${record.date.day}',
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
     );
   }
 
@@ -82,28 +175,31 @@ class _RecordsPageState extends State<RecordsPage> {
     );
   }
 
-  Widget _summaryCard() {
+  Widget _summaryCard(int completed, int totalSets) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.navy, AppColors.blue],
-        ),
+        gradient: const LinearGradient(colors: [AppColors.navy, AppColors.blue]),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             '近 30 天训练',
             style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _GradientStat(value: '3', label: '训练次数')),
-              Expanded(child: _GradientStat(value: '126', label: '总组数')),
-              Expanded(child: _GradientStat(value: '86%', label: '完成率')),
+              Expanded(child: _GradientStat(value: '$completed', label: '训练次数')),
+              Expanded(child: _GradientStat(value: '$totalSets', label: '总组数')),
+              Expanded(
+                child: _GradientStat(
+                  value: completed == 0 ? '0%' : '${(completed * 20).clamp(0, 100)}%',
+                  label: '完成率',
+                ),
+              ),
             ],
           ),
         ],
@@ -122,10 +218,7 @@ class _RecordsPageState extends State<RecordsPage> {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '今天摄入',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-          ),
+          Text('今天摄入', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           SizedBox(height: 18),
           Row(
             children: [
@@ -156,10 +249,7 @@ class _RecordsPageState extends State<RecordsPage> {
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '身体趋势',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-          ),
+          Text('身体趋势', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
           SizedBox(height: 18),
           Row(
             children: [
@@ -220,17 +310,10 @@ class _GradientStat extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 11),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
       ],
     );
   }
@@ -257,4 +340,3 @@ class _Macro extends StatelessWidget {
     );
   }
 }
-
